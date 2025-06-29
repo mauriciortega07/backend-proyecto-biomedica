@@ -2,13 +2,15 @@ const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const mySql = require('mysql2/promise');
+require('dotenv').config();  
+
 
 const app = express();
 const PORT = process.env.PORT || 4000;
 
 //app.use(cors(corsOptions));
 app.use(cors({
-  origin: 'http://localhost:3000',
+  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
@@ -26,7 +28,7 @@ app.use(cors({
   credentials: true
 }));*/
 
-app.use((req, res, next) => {
+/*app.use((req, res, next) => {
   res.header("Access-Control-Allow-Origin", "http://localhost:3000");
   res.header("Access-Control-Allow-Credentials", "true");
   res.header("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS");
@@ -37,7 +39,7 @@ app.use((req, res, next) => {
     return res.sendStatus(200);
   }
   next();
-});
+});*/
 
 
 app.use(bodyParser.json());
