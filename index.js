@@ -215,7 +215,7 @@ app.delete("/equipos_biomedicos/:id", async (req, res) => {
 });
 
 // Registro de usuario
-app.post('/register', async (req, res) => {
+app.post('https://backend-proyecto-biomedica-production.up.railway.app/register', async (req, res) => {
   const { name, idempleado, rolempleado, password } = req.body;
 
   try {
@@ -240,7 +240,7 @@ app.post('/register', async (req, res) => {
 });
 
 // Login de usuario
-app.post('/login', async (req, res) => {
+app.post('https://backend-proyecto-biomedica-production.up.railway.app/login', async (req, res) => {
   const { idempleado, password } = req.body;
 
   try {
