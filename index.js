@@ -72,7 +72,7 @@ app.post('/equipos_biomedicos', async (req, res) => {
 
   const sql = `
     INSERT INTO equipos_biomedicos
-    (nombre, descripcion, tipoDispositivo, nivelRiesgo, nomAplicada, caracteristicas, mantPreventivo, mantCorrectivo, img, usuario_id)
+    (nombre, descripcion, tipoDispositivo, activoEnInventario, ubicacion,nivelRiesgo, nomAplicada, caracteristicas, mantPreventivo, mantCorrectivo, img, usuario_id)
     VALUES (?, ?, ?, ?, ? , ?, ?, ?, ?, ?, ?, ?);
   `;
 
