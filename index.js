@@ -2,7 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const mySql = require('mysql2/promise');
-require('dotenv').config();  
+require('dotenv').config();
 
 
 const app = express();
@@ -18,16 +18,6 @@ app.use(cors({
 
 
 app.use(bodyParser.json());
-
-/*const pool = mySql.createPool({
-  host: "localhost",
-  user: "root",
-  password: "root",
-  database: "biomedica_db",
-  waitForConnections: true,
-  connectionLimit: 10,
-  queueLimit: 0
-});*/
 
 const pool = mySql.createPool({
   host: process.env.DB_HOST,
@@ -69,6 +59,8 @@ app.post('/equipos_biomedicos', async (req, res) => {
     nombre,
     descripcion,
     tipoDispositivo,
+    activoEnInventario,
+    ubicacion,
     nivelRiesgo,
     nomAplicada,
     caracteristicas,
@@ -81,13 +73,15 @@ app.post('/equipos_biomedicos', async (req, res) => {
   const sql = `
     INSERT INTO equipos_biomedicos
     (nombre, descripcion, tipoDispositivo, nivelRiesgo, nomAplicada, caracteristicas, mantPreventivo, mantCorrectivo, img, usuario_id)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+    VALUES (?, ?, ?, ?, ? , ?, ?, ?, ?, ?, ?, ?);
   `;
 
   const values = [
     nombre,
     descripcion,
     tipoDispositivo,
+    activoEnInventario,
+    ubicacion,
     nivelRiesgo,
     nomAplicada,
     JSON.stringify(caracteristicas),
@@ -119,6 +113,8 @@ app.put('/equipos_biomedicos/:id', async (req, res) => {
     nombre,
     descripcion,
     tipoDispositivo,
+    activoEnInventario,
+    ubicacion,
     nivelRiesgo,
     nomAplicada,
     caracteristicas,
@@ -135,7 +131,7 @@ app.put('/equipos_biomedicos/:id', async (req, res) => {
   try {
     const sqlUpdate = `
       UPDATE equipos_biomedicos
-      SET nombre = ?, descripcion = ?, tipoDispositivo = ?, nivelRiesgo = ?, nomAplicada = ?, caracteristicas = ?, mantCorrectivo = ?, mantPreventivo = ?, img = ?, usuario_id = ?
+      SET nombre = ?, descripcion = ?, tipoDispositivo = ?, activoEnInventario = ?, ubicacion = ?, nivelRiesgo = ?, nomAplicada = ?, caracteristicas = ?, mantCorrectivo = ?, mantPreventivo = ?, img = ?, usuario_id = ?
       WHERE id = ?;
     `;
 
@@ -143,6 +139,8 @@ app.put('/equipos_biomedicos/:id', async (req, res) => {
       nombre,
       descripcion,
       tipoDispositivo,
+      activoEnInventario,
+      ubicacion,
       nivelRiesgo,
       nomAplicada,
       JSON.stringify(caracteristicas),
