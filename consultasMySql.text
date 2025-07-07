@@ -20,8 +20,10 @@ mantPreventivo TEXT,
 mantCorrectivo TEXT,
 img TEXT,
 usuario_id INT,
-guardadoPor VARCHAR(100),
+agregadoPor VARCHAR(100),
 fechaAgregado VARCHAR(100),
+editadoPor VARCHAR(100),
+fechaModificacion VARCHAR(100),
 FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
 );
 

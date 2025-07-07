@@ -128,6 +128,8 @@ app.put('/equipos_biomedicos/:id', async (req, res) => {
     mantCorrectivo,
     img,
     usuario_id,
+    editadoPor,
+    fechaModificacion
   } = req.body;
 
   if (!id) {
@@ -137,7 +139,7 @@ app.put('/equipos_biomedicos/:id', async (req, res) => {
   try {
     const sqlUpdate = `
       UPDATE equipos_biomedicos
-      SET nombre = ?, descripcion = ?, tipoDispositivo = ?, activoEnInventario = ?, ubicacion = ?, nivelRiesgo = ?, nomAplicada = ?, caracteristicas = ?, mantCorrectivo = ?, mantPreventivo = ?, img = ?, usuario_id = ?
+      SET nombre = ?, descripcion = ?, tipoDispositivo = ?, activoEnInventario = ?, ubicacion = ?, nivelRiesgo = ?, nomAplicada = ?, caracteristicas = ?, mantCorrectivo = ?, mantPreventivo = ?, img = ?, usuario_id = ?, editadoPor = ?, fechaModificacion = ?
       WHERE id = ?;
     `;
 
@@ -154,6 +156,8 @@ app.put('/equipos_biomedicos/:id', async (req, res) => {
       JSON.stringify(mantCorrectivo),
       img,
       usuario_id,
+      editadoPor,
+      fechaModificacion,
       id
     ];
 
