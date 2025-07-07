@@ -20,6 +20,7 @@ mantPreventivo TEXT,
 mantCorrectivo TEXT,
 img TEXT,
 usuario_id INT,
+agregadoPor VARCHAR(100),
 FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
 );
 

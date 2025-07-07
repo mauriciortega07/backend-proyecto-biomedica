@@ -67,13 +67,17 @@ app.post('/equipos_biomedicos', async (req, res) => {
     mantCorrectivo,
     mantPreventivo,
     img,
-    usuario_id
+    usuario_id,
+    guardadoPor,
+    fechaAgregado
   } = req.body;
+
+  console.log("usuario_id recibido:", usuario_id);
 
   const sql = `
     INSERT INTO equipos_biomedicos
-    (nombre, descripcion, tipoDispositivo, activoEnInventario, ubicacion,nivelRiesgo, nomAplicada, caracteristicas, mantPreventivo, mantCorrectivo, img, usuario_id)
-    VALUES (?, ?, ?, ?, ? , ?, ?, ?, ?, ?, ?, ?);
+    (nombre, descripcion, tipoDispositivo, activoEnInventario, ubicacion,nivelRiesgo, nomAplicada, caracteristicas, mantPreventivo, mantCorrectivo, img, usuario_id, guardadoPor)
+    VALUES (?, ?, ?, ?, ? , ?, ?, ?, ?, ?, ?, ?, ?);
   `;
 
   const values = [
@@ -88,7 +92,9 @@ app.post('/equipos_biomedicos', async (req, res) => {
     JSON.stringify(mantPreventivo),
     JSON.stringify(mantCorrectivo),
     img,
-    usuario_id
+    usuario_id,
+    guardadoPor,
+    fechaAgregado
   ];
 
   try {
