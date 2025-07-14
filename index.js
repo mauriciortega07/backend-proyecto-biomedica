@@ -61,6 +61,8 @@ app.post('/equipos_biomedicos', async (req, res) => {
     tipoDispositivo,
     activoEnInventario,
     ubicacion,
+    numInventario,
+    numSerieEquipo,
     nivelRiesgo,
     nomAplicada,
     caracteristicas,
@@ -76,8 +78,8 @@ app.post('/equipos_biomedicos', async (req, res) => {
 
   const sql = `
     INSERT INTO equipos_biomedicos
-    (nombre, descripcion, tipoDispositivo, activoEnInventario, ubicacion,nivelRiesgo, nomAplicada, caracteristicas, mantPreventivo, mantCorrectivo, img, usuario_id, agregadoPor, fechaAgregado)
-    VALUES (?, ?, ?, ?, ? , ?, ?, ?, ?, ?, ?, ?, ?, ?);
+    (nombre, descripcion, tipoDispositivo, activoEnInventario, ubicacion, numInventario, numSerieEquipo, ivelRiesgo, nomAplicada, caracteristicas, mantPreventivo, mantCorrectivo, img, usuario_id, agregadoPor, fechaAgregado)
+    VALUES (?, ?, ?, ?, ? , ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
   `;
 
   const values = [
@@ -86,6 +88,8 @@ app.post('/equipos_biomedicos', async (req, res) => {
     tipoDispositivo,
     activoEnInventario,
     ubicacion,
+    numInventario,
+    numSerieEquipo,
     nivelRiesgo,
     nomAplicada,
     JSON.stringify(caracteristicas),
@@ -121,6 +125,8 @@ app.put('/equipos_biomedicos/:id', async (req, res) => {
     tipoDispositivo,
     activoEnInventario,
     ubicacion,
+    numInventario,
+    numSerieEquipo,
     nivelRiesgo,
     nomAplicada,
     caracteristicas,
@@ -139,7 +145,7 @@ app.put('/equipos_biomedicos/:id', async (req, res) => {
   try {
     const sqlUpdate = `
       UPDATE equipos_biomedicos
-      SET nombre = ?, descripcion = ?, tipoDispositivo = ?, activoEnInventario = ?, ubicacion = ?, nivelRiesgo = ?, nomAplicada = ?, caracteristicas = ?, mantCorrectivo = ?, mantPreventivo = ?, img = ?, usuario_id = ?, editadoPor = ?, fechaModificacion = ?
+      SET nombre = ?, descripcion = ?, tipoDispositivo = ?, activoEnInventario = ?, ubicacion = ?, numInventario = ?, numSerieEquipo = ?, nivelRiesgo = ?, nomAplicada = ?, caracteristicas = ?, mantCorrectivo = ?, mantPreventivo = ?, img = ?, usuario_id = ?, editadoPor = ?, fechaModificacion = ?
       WHERE id = ?;
     `;
 
@@ -149,6 +155,8 @@ app.put('/equipos_biomedicos/:id', async (req, res) => {
       tipoDispositivo,
       activoEnInventario,
       ubicacion,
+      numInventario,
+      numSerieEquipo,
       nivelRiesgo,
       nomAplicada,
       JSON.stringify(caracteristicas),
