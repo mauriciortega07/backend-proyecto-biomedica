@@ -8,6 +8,7 @@ require('dotenv').config();
 const app = express();
 const PORT = process.env.PORT || 4000;
 
+
 //app.use(cors(corsOptions));
 app.use(cors({
   origin: process.env.FRONTEND_URL || 'http://localhost:3000',
@@ -35,6 +36,10 @@ app.use((req, res, next) => {
   console.log(">>> Method:", req.method);
   console.log(">>> Headers:", req.headers);
   next();
+});
+
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`Servidor corriendo en 0.0.0.0:${PORT}`);
 });
 
 // Ruta de prueba
