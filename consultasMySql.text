@@ -30,6 +30,40 @@ FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
 );
 
 
+CREATE TABLE IF NOT EXISTS mantenimientos_equipo (
+  id INT NOT NULL AUTO_INCREMENT,
+  equipo_id INT NOT NULL,
+
+  -- opcional: para guardar el id temporal del frontend y evitar duplicados en reintentos
+  client_uid VARCHAR(80) NULL,
+
+  tipo ENUM('PREVENTIVO','CORRECTIVO','PREDICTIVO') NOT NULL,
+  estado ENUM('PROGRAMADO','FINALIZADO') NOT NULL DEFAULT 'PROGRAMADO',
+
+  fecha_programada DATETIME NOT NULL,
+  descripcion TEXT NOT NULL,
+
+  realizado_por VARCHAR(150) NOT NULL DEFAULT 'Anonimo',
+  usuario_id INT NULL,
+
+  fecha_finalizado DATETIME NULL,
+
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+  PRIMARY KEY (id),
+
+  INDEX idx_equipo_estado_fecha (equipo_id, estado, fecha_programada),
+  INDEX idx_usuario (usuario_id),
+  UNIQUE KEY uq_client_uid (client_uid),
+
+  CONSTRAINT fk_mant_equipo
+    FOREIGN KEY (equipo_id) REFERENCES equipos_biomedicos(id)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+
 
 
 ---- ARBOLES
@@ -1227,6 +1261,7 @@ FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
             }
         ]
     }; */
+
 
 // StartupScript Server EC2 AWS
 sudo env PATH=$PATH:/usr/bin /usr/lib/node_modules/pm2/bin/pm2 startup systemd -u ubuntu --hp /home/ubuntu
