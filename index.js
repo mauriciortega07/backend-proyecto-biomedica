@@ -30,6 +30,20 @@ const pool = mySql.createPool({
   queueLimit: 0
 });
 
+// ===============================
+// Helpers Mantenimientos
+// ===============================
+const TIPOS_VALIDOS = new Set(["PREVENTIVO", "CORRECTIVO", "PREDICTIVO"]);
+const ESTADOS_VALIDOS = new Set(["PROGRAMADO", "FINALIZADO"]);
+
+const isoToMysqlDatetime = (iso) => {
+  if (!iso || typeof iso !== "string") return null;
+  // "2026-02-16T06:04:00" => "2026-02-16 06:04:00"
+  const s = iso.replace("T", " ").slice(0, 19);
+  return s.length === 19 ? s : null;
+};
+
+
 // Middleware para loguear la petición
 app.use((req, res, next) => {
   console.log(">>> Origin:", req.headers.origin);
@@ -209,6 +223,188 @@ app.delete("/equipos_biomedicos/:id", async (req, res) => {
     res.status(500).json({ error: 'Error al eliminar el equipo' });
   }
 });
+
+
+//obtiene mantenimeintos por equipo
+app.get("/equipos_biomedicos/:equipoId/mantenimientos", async (req, res) => {
+  try {
+    const equipoId = Number(req.params.equipoId);
+    if (!equipoId) return res.status(400).json({ error: "equipoId inválido" });
+
+    const [rows] = await pool.query(
+      `SELECT 
+        id, equipo_id, client_uid, tipo, estado,
+        fecha_programada, descripcion, realizado_por, usuario_id,
+        fecha_finalizado, created_at, updated_at
+       FROM mantenimientos_equipo
+       WHERE equipo_id = ?
+       ORDER BY created_at DESC`,
+      [equipoId]
+    );
+
+    res.json(rows);
+  } catch (err) {
+    console.error("Error al obtener mantenimientos:", err);
+    res.status(500).json({ error: "Error al obtener mantenimientos" });
+  }
+});
+
+
+//Crear mantenimientos para un equipo
+app.post("/equipos_biomedicos/:equipoId/mantenimientos", async (req, res) => {
+  try {
+    const equipoId = Number(req.params.equipoId);
+    const items = req.body?.items;
+
+    if (!equipoId) return res.status(400).json({ error: "equipoId inválido" });
+    if (!Array.isArray(items) || items.length === 0) {
+      return res.status(400).json({ error: "Body.items debe ser un arreglo con al menos 1 elemento" });
+    }
+
+    // Validación + armado de filas
+    const rows = [];
+    for (const it of items) {
+      const tipo = (it?.tipo || "").toString().trim();
+      const estado = (it?.estado || "PROGRAMADO").toString().trim();
+      const fechaMysql = isoToMysqlDatetime(it?.fechaProgramada);
+      const descripcion = (it?.descripcion || "").toString().trim();
+      const realizadoPor = (it?.realizadoPor || "").toString().trim() || "Anonimo";
+      const usuario_id = it?.usuario_id ?? null;
+
+      // client_uid: usa el id string del front si te lo manda
+      const client_uid = it?.client_uid ?? it?.id ?? null;
+
+      if (!TIPOS_VALIDOS.has(tipo)) {
+        return res.status(400).json({ error: `tipo inválido: ${tipo}` });
+      }
+      if (!ESTADOS_VALIDOS.has(estado)) {
+        return res.status(400).json({ error: `estado inválido: ${estado}` });
+      }
+      if (!fechaMysql) {
+        return res.status(400).json({ error: "fechaProgramada inválida (usa YYYY-MM-DDTHH:mm:ss)" });
+      }
+      if (!descripcion) {
+        return res.status(400).json({ error: "descripcion requerida" });
+      }
+
+      rows.push([
+        equipoId,
+        client_uid,
+        tipo,
+        estado,
+        fechaMysql,
+        descripcion,
+        realizadoPor,
+        usuario_id,
+      ]);
+    }
+
+    const placeholders = rows.map(() => "(?,?,?,?,?,?,?,?)").join(", ");
+    const sql = `
+      INSERT INTO mantenimientos_equipo
+      (equipo_id, client_uid, tipo, estado, fecha_programada, descripcion, realizado_por, usuario_id)
+      VALUES ${placeholders};
+    `;
+
+    const params = rows.flat();
+    const [result] = await pool.query(sql, params);
+
+    res.status(201).json({
+      message: "Mantenimientos guardados",
+      insertedCount: result.affectedRows,
+      firstInsertId: result.insertId
+    });
+  } catch (err) {
+    console.error("Error al insertar mantenimientos:", err);
+
+    // duplicado por uq_client_uid
+    if (err?.code === "ER_DUP_ENTRY") {
+      return res.status(409).json({ error: "Duplicado: client_uid ya existe (reintento del front)" });
+    }
+
+    res.status(500).json({ error: "Error al insertar mantenimientos" });
+  }
+});
+
+
+//Editar mantenimiento solo si esta programado
+app.patch("/mantenimientos/:id", async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    if (!id) return res.status(400).json({ error: "id inválido" });
+
+    const fechaMysql = isoToMysqlDatetime(req.body?.fechaProgramada);
+    const descripcion = (req.body?.descripcion || "").toString().trim();
+    const realizadoPor = (req.body?.realizadoPor || "").toString().trim() || null;
+    const usuario_id = req.body?.usuario_id ?? null;
+
+    if (!fechaMysql) return res.status(400).json({ error: "fechaProgramada inválida" });
+    if (!descripcion) return res.status(400).json({ error: "descripcion requerida" });
+
+    const [result] = await pool.query(
+      `UPDATE mantenimientos_equipo
+       SET fecha_programada = ?, descripcion = ?, realizado_por = COALESCE(?, realizado_por), usuario_id = ?
+       WHERE id = ? AND estado = 'PROGRAMADO'`,
+      [fechaMysql, descripcion, realizadoPor, usuario_id, id]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(409).json({ error: "No se pudo editar (no existe o ya está FINALIZADO)" });
+    }
+
+    res.json({ message: "Mantenimiento actualizado" });
+  } catch (err) {
+    console.error("Error al editar mantenimiento:", err);
+    res.status(500).json({ error: "Error al editar mantenimiento" });
+  }
+});
+
+
+//finalizar mantenimeinto solo programado
+app.patch("/mantenimientos/:id/finalizar", async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    if (!id) return res.status(400).json({ error: "id inválido" });
+
+    const [result] = await pool.query(
+      `UPDATE mantenimientos_equipo
+       SET estado = 'FINALIZADO', fecha_finalizado = NOW()
+       WHERE id = ? AND estado = 'PROGRAMADO'`,
+      [id]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(409).json({ error: "No se pudo finalizar (no existe o ya está FINALIZADO)" });
+    }
+
+    res.json({ message: "Mantenimiento finalizado" });
+  } catch (err) {
+    console.error("Error al finalizar mantenimiento:", err);
+    res.status(500).json({ error: "Error al finalizar mantenimiento" });
+  }
+});
+
+
+//finalizar todos los programados de un equipo
+app.patch("/equipos_biomedicos/:equipoId/mantenimientos/finalizar_todos", async (req, res) => {
+  try {
+    const equipoId = Number(req.params.equipoId);
+    if (!equipoId) return res.status(400).json({ error: "equipoId inválido" });
+
+    const [result] = await pool.query(
+      `UPDATE mantenimientos_equipo
+       SET estado = 'FINALIZADO', fecha_finalizado = NOW()
+       WHERE equipo_id = ? AND estado = 'PROGRAMADO'`,
+      [equipoId]
+    );
+
+    res.json({ message: "OK", afectados: result.affectedRows });
+  } catch (err) {
+    console.error("Error al finalizar todos:", err);
+    res.status(500).json({ error: "Error al finalizar todos" });
+  }
+});
+
 
 // Registro de usuario
 app.post('/register', async (req, res) => {
