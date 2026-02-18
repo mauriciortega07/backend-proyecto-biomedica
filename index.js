@@ -461,6 +461,69 @@ app.post('/login', async (req, res) => {
   }
 });
 
+// ===============================
+// BORRAR 1 mantenimiento (programado o finalizado)
+// ===============================
+app.delete("/mantenimientos/:id", async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    if (!id) return res.status(400).json({ error: "id inválido" });
+
+    const [result] = await pool.query(
+      `DELETE FROM mantenimientos_equipo WHERE id = ?`,
+      [id]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: "Mantenimiento no encontrado" });
+    }
+
+    res.json({ message: "Mantenimiento eliminado", id });
+  } catch (err) {
+    console.error("Error al eliminar mantenimiento:", err);
+    res.status(500).json({ error: "Error al eliminar mantenimiento" });
+  }
+});
+
+
+// ===============================
+// BORRAR mantenimientos por equipo (con filtro por estado opcional)
+// ===============================
+app.delete("/equipos_biomedicos/:equipoId/mantenimientos", async (req, res) => {
+  try {
+    const equipoId = Number(req.params.equipoId);
+    if (!equipoId) return res.status(400).json({ error: "equipoId inválido" });
+
+    const estado = (req.query?.estado || "").toString().trim().toUpperCase();
+
+    // Si viene estado, validar
+    if (estado && !ESTADOS_VALIDOS.has(estado)) {
+      return res.status(400).json({ error: `estado inválido: ${estado}` });
+    }
+
+    let sql = `DELETE FROM mantenimientos_equipo WHERE equipo_id = ?`;
+    const params = [equipoId];
+
+    if (estado) {
+      sql += ` AND estado = ?`;
+      params.push(estado);
+    }
+
+    const [result] = await pool.query(sql, params);
+
+    res.json({
+      message: "OK",
+      equipoId,
+      estado: estado || null,
+      eliminados: result.affectedRows,
+    });
+  } catch (err) {
+    console.error("Error al eliminar mantenimientos por equipo:", err);
+    res.status(500).json({ error: "Error al eliminar mantenimientos por equipo" });
+  }
+});
+
+
 /*app.listen(PORT, () => {
   console.log(`Servidor corriendo en localhost:${PORT}`);
 }); */
