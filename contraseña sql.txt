@@ -1,0 +1,4 @@
+Admin2026Secure1#
+admin
+
+mysql -u admin -p
